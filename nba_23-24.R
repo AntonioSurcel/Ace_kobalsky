@@ -1,0 +1,183 @@
+# Load the readxl package
+library(readxl)
+
+# improt the file
+excel_file <- "C:/Users/אנטוניו/OneDrive/מסמכים/nba 23-24/stats_nba_23-24.xlsx"
+
+# Read the relavent sheet in the Excel file using the full path
+nba <- read_excel(excel_file, sheet = "StatsTable")
+nba <- nba[complete.cases(nba), ]
+
+#Check for missing values
+missing_values <- colSums(is.na(nba))
+
+# Print the number of missing values for each column
+print(missing_values)
+
+# Load required libraries
+library(readxl)
+library(tidyverse)
+library(caret)
+
+# Read NBA data from Excel file
+# Check if conversion was successful
+# Print summary of data
+print(summary(nba))
+
+# Create training and testing sets
+set.seed(123) # for reproducibility
+train_index <- createDataPartition(nba$salaries, p = 0.8, list = FALSE)
+train_data <- nba[train_index, ]
+test_data <- nba[-train_index, ]
+
+# Train a linear regression model
+lm_model <- lm(salaries ~ ., data = train_data)
+head(nba)
+# Evaluate the model
+predictions <- predict(lm_model, newdata = test_data)
+mse <- mean((predictions - test_data$salaries)^2)
+rsquared <- cor(predictions, test_data$salaries)^2
+
+# Print evaluation metrics
+cat("Mean Squared Error:", mse, "\n")
+cat("R-squared:", rsquared, "\n")
+
+# Ask user for input data
+age <- as.numeric(readline("Enter player's age: "))
+G <- as.numeric(readline("Enter number of games played: "))
+GS <- as.numeric(readline("Enter number of games started: "))
+MP <- as.numeric(readline("Enter minutes played per game: "))
+FG_percent <- as.numeric(readline("Enter field goal percentage: "))
+`3P_percent` <- as.numeric(readline("Enter three-point percentage: "))
+`FT_percent` <- as.numeric(readline("Enter free throw percentage: "))
+TRB <- as.numeric(readline("Enter total rebounds: "))
+AST <- as.numeric(readline("Enter assists per game: "))
+STL <- as.numeric(readline("Enter steals per game: "))
+BLK <- as.numeric(readline("Enter blocks per game: "))
+TOV <- as.numeric(readline("Enter turnovers per game: "))
+PF <- as.numeric(readline("Enter personal fouls per game: "))
+PTS <- as.numeric(readline("Enter points per game: "))
+
+# Assign provided values of Kevin Durant to variables
+age <- 35
+G <- 75
+GS <- 75
+MP <- 37.2
+FG_percent <- 0.523
+threeP_percent <- 0.413
+FT_percent <- 0.856
+TRB <- 6.6
+AST <- 5
+STL <- 0.9
+BLK <- 1.2
+TOV <- 3.3
+PF <- 1.8
+PTS <- 27.1
+new_data <- data.frame(
+  Age = age,
+  G = G,
+  GS = GS,
+  MP = MP,
+  `FG` = FG_percent,
+  `X3P` = threeP_percent,
+  `FT` = FT_percent,
+  TRB = TRB,
+  AST = AST,
+  STL = STL,
+  BLK = BLK,
+  TOV = TOV,
+  PF = PF,
+  PTS = PTS
+)
+
+
+# Make predictions
+predicted_salaries <- predict(lm_model, newdata = new_data)
+
+# Format predicted salary
+formatted_salary <- format(predicted_salaries, big.mark = ",", scientific = FALSE)
+cat("Estimated salary: $", formatted_salary, "\n", sep = "")
+
+
+
+
+# Compute correlation matrix
+library(ggplot2)
+
+# Create heatmap
+# Compute correlation matrix
+correlation_matrix <- cor(nba[, c("Age", "G", "GS", "MP", "FG", "X3P", "FT", "TRB", "AST", "STL", "BLK", "TOV", "PF", "PTS", "salaries")])
+
+# Convert the correlation matrix to a data frame
+correlation_df <- as.data.frame(as.table(correlation_matrix))
+
+# Rename the columns
+names(correlation_df) <- c("Var1", "Var2", "Correlation")
+
+# Create heatmap
+heatmap <- ggplot(data = correlation_df, aes(x = Var1, y = Var2, fill = Correlation)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Correlation Heatmap",
+       x = "Variables",
+       y = "Variables",
+       fill = "Correlation")
+
+# Print the heatmap
+print(heatmap)
+
+
+#Check the correlation between "salaries" and all other variables in a heatmap
+
+# Compute correlation matrix
+correlation_matrix <- cor(nba)
+
+# Extract correlation of 'salaries' with other variables
+salaries_correlation <- correlation_matrix["salaries", ]
+
+# Convert to data frame
+salaries_correlation_df <- data.frame(Variable = names(salaries_correlation), Correlation_with_Salaries = as.vector(salaries_correlation))
+
+# Remove 'salaries' from the data frame
+salaries_correlation_df <- salaries_correlation_df[-1, ]
+
+# Load required library
+library(ggplot2)
+
+# Create heatmap
+heatmap <- ggplot(data = salaries_correlation_df, aes(x = "", y = Variable, fill = Correlation_with_Salaries)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "blue", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        plot.title = element_text(hjust = 0.5),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  labs(title = "Correlation between Salaries and Other Variables",
+       fill = "Correlation")
+
+# Print the heatmap
+print(heatmap)
+
+
+
+
+
+library(scales)
+
+bubble_chart_salary_color <- ggplot(nba, aes(x = PTS, y = AST, size = salaries, color = salaries)) +
+  geom_point(alpha = 0.7) +  # Adjust transparency
+  scale_size_continuous(name = "Salary (Millions)", labels = scales::dollar_format(scale = 1e-6)) +  # Set the size scale to represent salary in millions with dollar sign
+  scale_color_continuous(name = "Salary (Millions)", labels = scales::dollar_format(scale = 1e-6)) +  # Set the color scale to represent salary in millions with dollar sign
+  labs(title = "Player Statistics vs. Salary",
+       x = "Points per Game (PTS)",
+       y = "Assists per Game (AST)",
+       color = "Salary (Millions)",
+       size = "Salary (Millions)") +
+  theme_minimal()  # Customize the theme if needed
+
+# Print the bubble chart with size and color based on salary
+print(bubble_chart_salary_color)
